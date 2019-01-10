@@ -9,7 +9,7 @@ If updating addresses, I recommend deleting your entire address book from EST 2.
 
 Additional comments:
 
-* Place your QuickBooks export Excel file into the same directory as this script, run script, and follow prompts.
+* Place your QuickBooks export Excel file into the same directory as these two scripts, run QB2EST.py, and follow prompts.
 * You may need to install the following modules:
   * openpyxl: pip install openpyxl
   * pycountry: pip install pycountry
