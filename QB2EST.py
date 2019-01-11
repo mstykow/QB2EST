@@ -2,7 +2,7 @@
 # Program converts QuickBooks contacts export Excel file into a text file that
 # can be imported with Canada Posts's EST 2.0 software.
 
-# Install these modules first.
+# Install these modules before first time running script.
 import openpyxl, pycountry
 from openpyxl.cell import get_column_letter, column_index_from_string
 
@@ -19,18 +19,18 @@ def export_file_processor(exportFile):
         print("Filename does not exist. Please try again.")
         exportFile = input()    
     print("Processing...")
-    contactsWB = openpyxl.load_workbook(exportFile)
-    contactsSheet = contactsWB.get_sheet_by_name('Sheet1')
-    maxRow = contactsSheet.max_row
-    importFile = os.path.splitext(exportFile)[0] + '.txt'
-    return contactsWB, contactsSheet, maxRow, importFile
+    workbook = openpyxl.load_workbook(exportFile)
+    worksheet = workbook.get_sheet_by_name('Sheet1')
+    maxRow = worksheet.max_row
+    filename = os.path.splitext(exportFile)[0] + '.txt'
+    return workbook, worksheet, maxRow, filename
 
 # Creates new sheet with a given list of fields inside a workbook.
 def make_import_sheet(workbook, name, fieldList):
-    postSheet = workbook.create_sheet(title = name)
+    worksheet = workbook.create_sheet(title = name)
     for i in range(len(fieldList)):
-        postSheet.cell(row = 1, column = i + 1).value = list(fieldList.keys())[i]
-    return postSheet
+        worksheet.cell(row = 1, column = i + 1).value = list(fieldList.keys())[i]
+    return worksheet
 
 # Finds the first row containing data in column 'B' of a sheet.
 def find_data(sheet):
@@ -44,13 +44,13 @@ def find_data(sheet):
 
 # Finds columns corresponding to each cell in a list and returns assignment as a dictionary.
 def find_columns(listOfCells, sheet):
-    srcFieldsDict = {}
+    dictionary = {}
     for cell in sheet.rows[startRow - 1]:
         if cell.value in listOfCells:
-            srcFieldsDict[cell.value] = cell.column
+            dictionary[cell.value] = cell.column
         else:
             continue
-    return srcFieldsDict
+    return dictionary
 
 # Right-aligns four columns of a spreadsheet.
 def address_align(sheet, start, end, A, B, C, D):
@@ -119,17 +119,21 @@ def none_to_string(cellValue):
     else:
         return cellValue
 
-# Writes sheet data separated by commas and each value enclosed by quotes to filename.
+# Writes data from rows with nonempty first cell into filename where each value
+# is separated by commas enclosed by quotes.
 def quote_comma_export(filename, sheet):
     export = open(filename, 'w')
     export.close()
     for rowOfCells in sheet.rows[1:]:
-        rowOfValues = []
-        for cell in rowOfCells:
-            rowOfValues.append('"' + none_to_string(cell.value) + '"')
-        export = open(filename, 'a')
-        export.write(','.join(rowOfValues) + '\n')
-        export.close()
+        if rowOfCells[0].value == None:
+            continue
+        else:
+            rowOfValues = []
+            for cell in rowOfCells:
+                rowOfValues.append('"' + none_to_string(cell.value) + '"')
+            export = open(filename, 'a')
+            export.write(','.join(rowOfValues) + '\n')
+            export.close()
 
 # Regex for splitting up City, Province, Postal Code
 addressRegex = re.compile(r'''(
