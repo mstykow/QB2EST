@@ -4,10 +4,10 @@
 
 # Install these modules before first time running script.
 import openpyxl, pycountry
-from openpyxl.cell import get_column_letter, column_index_from_string
+from openpyxl.utils import get_column_letter, column_index_from_string
 
 # Python standard modules.
-import re, os, warnings
+import sys, re, os, warnings
 warnings.simplefilter("ignore")
 
 # External module part of this program.
@@ -35,7 +35,7 @@ def make_import_sheet(workbook, name, fieldList):
 # Finds the first row containing data in column 'B' of a sheet.
 def find_data(sheet):
     startRow = 1
-    for cell in sheet.columns[1]:
+    for cell in list(sheet.columns)[1]:
         if cell.value == None:
             startRow += 1
         else:
@@ -45,7 +45,7 @@ def find_data(sheet):
 # Finds columns corresponding to each cell in a list and returns assignment as a dictionary.
 def find_columns(listOfCells, sheet):
     dictionary = {}
-    for cell in sheet.rows[startRow - 1]:
+    for cell in list(sheet.rows)[startRow - 1]:
         if cell.value in listOfCells:
             dictionary[cell.value] = cell.column
         else:
@@ -73,7 +73,7 @@ def address_align(sheet, start, end, A, B, C, D):
 
 # Converts country names or abbreviation in column of sheet to ISO 3166-2 standard code.
 def country_converter(sheet, column, start):
-    for country in sheet.columns[column_index_from_string(column) - 1][start:]:
+    for country in list(sheet.columns)[column_index_from_string(column) - 1][start:]:
         try:
             countryInfo = pycountry.countries.lookup(country.value)
         except:
@@ -91,7 +91,7 @@ def source_to_target(sheet1, start, end, sheet2, mapping, sourceDict, targetDict
 # Splits an address made of city, province, postal code into three pieces and writes these
 # pieces to columns A, B, C.
 def address_splitter(sheet, A, B, C):
-    for address in sheet.columns[column_index_from_string(A) - 1][1:]:
+    for address in list(sheet.columns)[column_index_from_string(A) - 1][1:]:
         mo = addressRegex.search(str(address.value))
         if mo:
             sheet[B + str(address.row)].value = mo.groups()[3]
@@ -102,13 +102,13 @@ def address_splitter(sheet, A, B, C):
 
 # Converts province names in column of sheet to Canada Post standard code.
 def province_converter(sheet, column):
-    for province in sheet.columns[column_index_from_string(column) - 1][1:]:
+    for province in list(sheet.columns)[column_index_from_string(column) - 1][1:]:
         if province.value in list(provinces.codes.keys()):
             province.value = provinces.codes[province.value]
 
 # Assigns column B of a row the value '1' if column A is non-empty.
 def non_empty_names(sheet, A, B):
-    for name in sheet.columns[column_index_from_string(A) - 1][1:]:
+    for name in list(sheet.columns)[column_index_from_string(A) - 1][1:]:
         if name.value:
             sheet[B + str(name.row)].value = '1'
 
@@ -124,7 +124,7 @@ def none_to_string(cellValue):
 def quote_comma_export(filename, sheet):
     export = open(filename, 'w')
     export.close()
-    for rowOfCells in sheet.rows[1:]:
+    for rowOfCells in list(sheet.rows)[1:]:
         if rowOfCells[0].value == None:
             continue
         else:
@@ -188,6 +188,10 @@ translator = {
     'Main Phone': 'Client Voice Phone',
     'Main Email': 'Client Email Address'
     }
+
+# Get the path to the current directory.
+base_path = os.path.dirname(sys.argv[0])
+os.chdir(base_path)
 
 # Get export file.
 print('''Please make sure that the QuickBooks export file is located in the
